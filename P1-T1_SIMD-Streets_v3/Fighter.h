@@ -5,16 +5,16 @@
 #ifdef SIMD
 struct FighterSOA
 {
-    float posX[gc::NUM_FIGHTERS_SCALAR];
-    float posY[gc::NUM_FIGHTERS_SCALAR];
-	float velX[gc::NUM_FIGHTERS_SCALAR];
-	float velY[gc::NUM_FIGHTERS_SCALAR];
-    uint32_t team[gc::NUM_FIGHTERS_SCALAR];
-    uint32_t member[gc::NUM_FIGHTERS_SCALAR];
-    uint32_t frameOffset[gc::NUM_FIGHTERS_SCALAR];
+    _declspec(align(16)) float posX[gc::NUM_FIGHTERS_SCALAR];
+		_declspec(align(16))float posY[gc::NUM_FIGHTERS_SCALAR];
+		_declspec(align(16))float velX[gc::NUM_FIGHTERS_SCALAR];
+		_declspec(align(16))float velY[gc::NUM_FIGHTERS_SCALAR];
+		_declspec(align(16))uint32_t team[gc::NUM_FIGHTERS_SCALAR];
+		_declspec(align(16))uint32_t member[gc::NUM_FIGHTERS_SCALAR];
+		_declspec(align(16))uint32_t frameOffset[gc::NUM_FIGHTERS_SCALAR];
 	// todo initialise
-    uint32_t frameNum[gc::NUM_FIGHTERS_SCALAR];
-    uint32_t alive[gc::NUM_FIGHTERS_SCALAR];
+    _declspec(align(16))uint32_t frameNum[gc::NUM_FIGHTERS_SCALAR];
+    _declspec(align(16))uint32_t alive[gc::NUM_FIGHTERS_SCALAR];
 };
 struct FighterIndices
 {
