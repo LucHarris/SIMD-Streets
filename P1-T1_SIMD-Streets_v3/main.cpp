@@ -5,7 +5,7 @@
 #include <random>
 int main()
 {
-    srand(time(0));
+    srand(time(0U));
     // create the window
     sf::RenderWindow window(sf::VideoMode(gc::WINDOW_WIDTH, gc::WINDOW_HEIGHT), gc::APP_NAME);
     sf::Clock clock;

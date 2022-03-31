@@ -105,6 +105,14 @@ void SceneObjects::Update(float dt)
     }
 
 
+    // update sprites
+    {
+        for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
+        {
+            
+        }
+    }
+
 
 #else // SCALAR
 
