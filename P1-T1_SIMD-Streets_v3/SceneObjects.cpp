@@ -9,36 +9,20 @@ void SceneObjects::Init()
     // init fighter data
     {
 #ifdef SIMD
-        // init blue
-        for (uint32_t i = 0; i < gc::NUM_BLUE_SCALAR; i++)
+        // init fighters AOS
+        for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
         {
             fighterSOA.posX[i] = RandF(gc::BOUNDARY_RECT.left, gc::BOUNDARY_RECT.width);
             fighterSOA.posY[i] = RandF(gc::BOUNDARY_RECT.top, gc::BOUNDARY_RECT.height);
             fighterSOA.velX[i] = RandF(-gc::FIGHTER_SPEED, gc::FIGHTER_SPEED);
             fighterSOA.velY[i] = RandF(-gc::FIGHTER_SPEED, gc::FIGHTER_SPEED);
-            fighterSOA.team[i] = gc::BLUE_TEAM;
+            fighterSOA.team[i] = (i < gc::NUM_BLUE_SCALAR) ? gc::BLUE_TEAM : gc::PURPLE_TEAM;
             fighterSOA.member[i] = i % gc::MEMBER_COUNT;
             fighterSOA.alive[i] = 1;
-            // todo amend 
-            fighterSOA.frameOffset[i] = i % gc::NUM_FIGHTER_FRAMES;
-            // todo amend 
-            fighterSOA.frameNum[i] = i % gc::NUM_FIGHTER_FRAMES;
+            fighterSOA.frameNum[i] = anim_data::ATTACK;
+            fighterSOA.frameOffset[i] = i % gc::ANIM_DATA[fighterSOA.frameNum[i]].num_frames;
         }
-        //  init purple
-        for (uint32_t i = gc::NUM_BLUE_SCALAR; i < gc::NUM_FIGHTERS_SCALAR; i++)
-        {
-            fighterSOA.posX[i] = RandF(gc::BOUNDARY_RECT.left, gc::BOUNDARY_RECT.width);
-            fighterSOA.posY[i] = RandF(gc::BOUNDARY_RECT.top, gc::BOUNDARY_RECT.height);
-            fighterSOA.velX[i] = RandF(-gc::FIGHTER_SPEED, gc::FIGHTER_SPEED);
-            fighterSOA.velY[i] = RandF(-gc::FIGHTER_SPEED, gc::FIGHTER_SPEED);
-            fighterSOA.team[i] = gc::PURPLE_TEAM;
-            fighterSOA.member[i] = i % gc::MEMBER_COUNT;
-            fighterSOA.alive[i] = 1;
-            //todo amend
-            fighterSOA.frameOffset[i] = i % gc::NUM_FIGHTER_FRAMES;
-            // todo amend 
-            fighterSOA.frameNum[i] = i % gc::NUM_FIGHTER_FRAMES;
-        }
+
         SetToTeamStartIndex(FighterIndices::BLUE);
 
 #else // scalar
@@ -74,6 +58,7 @@ void SceneObjects::Init()
         for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; ++i)
         {
             fighterSprites[i].setTexture(texture);
+            fighterSprites[i].setOrigin({ (float)(gc::FIGHTER_W >> 1), (float)(gc::FIGHTER_H >> 1) });
 #ifdef SIMD
             // assign initial simd data to sprite
             fighterSprites[i].setPosition({ fighterSOA.posX[i],fighterSOA.posY[i] });
@@ -109,10 +94,10 @@ void SceneObjects::Update(float dt)
     const __m128 m128_ELAPSED_SECS = _mm_set1_ps(dt);
     // blue collide with purple
     UpdateCollisionSIMD();
+    SetToTeamStartIndex(FighterIndices::BLUE);
     // sort
     UpdateLeftPackingMovementSIMD(m128_ELAPSED_SECS, gc::m128_BOUNDS);
     SetToTeamStartIndex(FighterIndices::BLUE);
-    fighterIndices.set_m128();
     const size_t ENDLOOP = last_left_element >> 2;
     for (size_t i = 0; i < ENDLOOP; i++)
     {
@@ -124,42 +109,36 @@ void SceneObjects::Update(float dt)
     {
         for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
         {
+            fighterSOA.frameOffset[i] = (fighterSOA.frameOffset[i] + 1) % gc::ANIM_DATA[fighterSOA.frameNum[i]].num_frames;
+
             fighterSprites[i].setPosition(fighterSOA.posX[i], fighterSOA.posY[i]);
             fighterSprites[i].setTextureRect(
                 {
-                    (int)(gc::ANIM_X_OFFSET + fighterSOA.frameOffset[i] * gc::FIGHTER_W),
+                    (int)(gc::ANIM_X_OFFSET + (fighterSOA.frameOffset[i] + gc::ANIM_DATA[fighterSOA.frameNum[i]].offset_frame) * gc::FIGHTER_W),
                     (int)(gc::ANIM_Y_OFFSET + ((fighterSOA.team[i] * 4U) + fighterSOA.member[i]) * gc::FIGHTER_H),
                     (int)(gc::FIGHTER_W),
                     (int)(gc::FIGHTER_H)
                 });
 
-            // todo remove
-            //std::cout << fighterSOA.posX[i] << fighterSOA.posY[i] << fighterSOA.frameOffset[i] <<
-            //    fighterSOA.team[i] << fighterSOA.member[i] << fighterSOA.frameOffset[i] << fighterSOA.frameNum[i]
-            //    << fighterSOA.velX[i] << fighterSOA.velY[i];
-            //std::cout << fighterIndices.p_frame_num << fighterIndices.p_frame_offset << fighterIndices.p_is_alive << fighterIndices.p_m128i_frame_num
-            //    << fighterIndices.p_m128i_frame_offset << fighterIndices.p_m128i_is_alive << fighterIndices.p_m128i_member <<
-            //    fighterIndices.p_m128i_team_id << fighterIndices.p_m128_pos_x << fighterIndices.p_m128_pos_y << fighterIndices.p_m128_vel_x <<
-            //    fighterIndices.p_member << fighterIndices.start[0] << fighterIndices.start[1];
+
         }
     }
 
 
 #else // SCALAR
-
     
     UpdateCollisionsScalar();
     UpdateSortScalar(dt);
     UpdateAxisInBoundsScalar(dt);
-
+    // update sprite data
     for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
     {
-        fighterAOS.data[i].frameOffset =( fighterAOS.data[i].frameOffset + 1) % fighterAOS.data[i].frameNum;
+        fighterAOS.data[i].frameOffset =( fighterAOS.data[i].frameOffset + 1) % gc::ANIM_DATA[fighterAOS.data[i].frameNum].num_frames;
 
         fighterSprites[i].setPosition(fighterAOS.data[i].posX, fighterAOS.data[i].posY);
         fighterSprites[i].setTextureRect(
             {
-                (int)(gc::ANIM_X_OFFSET + fighterAOS.data[i].frameOffset * gc::FIGHTER_W),
+                (int)(gc::ANIM_X_OFFSET + (fighterAOS.data[i].frameOffset + gc::ANIM_DATA[fighterAOS.data[i].frameNum].offset_frame) *  gc::FIGHTER_W),
                 (int)(gc::ANIM_Y_OFFSET + ((fighterAOS.data[i].team * 4U) + fighterAOS.data[i].member) * gc::FIGHTER_H),
                 (int)(gc::FIGHTER_W),
                 (int)(gc::FIGHTER_H)
@@ -211,8 +190,8 @@ void SceneObjects::UpdateCollisionSIMD()
         __m128i blue_is_alive = _mm_set1_epi32(*fighterIndices.p_is_alive);
 
 
-        // reset purple indices with offset
-        SetToTeamStartIndex(FighterIndices::PURPLE);
+        // reset purple indices 
+        SetM128(FighterIndices::PURPLE);
 
         result = fighterIndices.validate();
 
@@ -228,17 +207,12 @@ void SceneObjects::UpdateCollisionSIMD()
             __m128 x = *fighterIndices.p_m128_pos_x;
             __m128 y = *fighterIndices.p_m128_pos_y;
             // calc squ distance between b and p
-            /*__m128 square_dist = DistanceSquaredSIMD(
+            __m128 square_dist = DistanceSquaredSIMD(
                 blue_pos_x,
                 blue_pos_y,
                 x,
-                y);*/
+                y);
 
-            x = _mm_sub_ps(blue_pos_x, x);
-            y = _mm_sub_ps(blue_pos_y, y);
-            x = _mm_mul_ps(x, x);
-            y = _mm_mul_ps(y, y);
-            __m128 square_dist = _mm_add_ps(x, y);
             // purple ko'ed if within range of blue
             {
                 // if distance is within range
@@ -273,14 +247,16 @@ void SceneObjects::UpdateLeftPackingMovementSIMD(const __m128& m128_elapsed_secs
 
     // result of alive comparision
     __m128i mask;
-
+    // point to start of data
     SetToTeamStartIndex(FighterIndices::BLUE);
 
     while (next)
     {
+        // stepped from end of previous loop
         fighterIndices.set_m128();
-
+        // mask based on if fighter is alive
         mask = _mm_cmpeq_epi32(*fighterIndices.p_m128i_is_alive, gc::ZERO_EPI);
+        // shuffle mask
         mask_lookup = _mm_movemask_ps(_mm_castsi128_ps(mask));
 
         assert(mask_lookup < gc::SHUF_MAX);
@@ -360,11 +336,11 @@ void SceneObjects::UpdateAxisInBounds(__m128* axis_pos, __m128* axis_vel, const 
     *axis_pos = next_pos;
 }
 
-void SceneObjects::SetToTeamStartIndex(uint32_t index, uint32_t offset)
+void SceneObjects::SetToTeamStartIndex(uint32_t team, uint32_t offset)
 {
-    assert(index < FighterIndices::COUNT);
+    assert(team < FighterIndices::COUNT);
 
-    uint32_t i = fighterIndices.start[index] + offset;
+    uint32_t i = fighterIndices.start[team] + offset;
     // points to specific offset in soa
     fighterIndices.p_pos_x = fighterSOA.posX + i;
     fighterIndices.p_pos_y = fighterSOA.posY + i;
@@ -394,6 +370,21 @@ __m128 SceneObjects::DistanceSquaredSIMD(const __m128& a_x, const __m128& a_y,  
     // x + b
     return _mm_add_ps(x, y);
 }
+
+void SceneObjects::SetM128(uint32_t team, uint32_t simdOffset)
+{
+    uint32_t i = fighterIndices.start[team] + (simdOffset << 2);
+
+    fighterIndices.p_m128_pos_x = (__m128*)(fighterSOA.posX + i);
+    fighterIndices.p_m128_pos_y = (__m128*)(fighterSOA.posY + i);
+    fighterIndices.p_m128_vel_x = (__m128*)(fighterSOA.velX + i);
+    fighterIndices.p_m128_vel_y = (__m128*)(fighterSOA.velY + i);
+    fighterIndices.p_m128i_team_id = (__m128i*)(fighterSOA.team + i);
+    fighterIndices.p_m128i_member = (__m128i*)(fighterSOA.member + i);
+    fighterIndices.p_m128i_frame_offset = (__m128i*)(fighterSOA.frameOffset + i);
+    fighterIndices.p_m128i_frame_num = (__m128i*)(fighterSOA.frameNum + i);
+    fighterIndices.p_m128i_is_alive = (__m128i*)(fighterSOA.alive + i);
+}
 #else
 
 
@@ -417,7 +408,7 @@ void SceneObjects::UpdateCollisionsScalar()
             {
                 fighterAOS.data[purple].alive = 0;
                 fighterAOS.data[purple].frameNum = anim_data::DOWN;
-                fighterAOS.data[purple].frameOffset %= gc::ANIM_DATA[fighterAOS.data[purple].frameNum].num_frames;
+                fighterAOS.data[purple].frameOffset = 0;
             }
         }
     }
@@ -471,8 +462,6 @@ void SceneObjects::UpdateAxisInBoundsScalar(float elapsed_secs)
         }
         ++i;
     }
-
-
 }
 
 float SceneObjects::DistanceSquaredScalar(float a_x, float a_y, float b_x, float b_y)

@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <tmmintrin.h>
 #ifndef SIMD
-//#define SIMD
+#define SIMD
 #endif // !SIMD
 
 struct anim_data
@@ -11,9 +11,6 @@ struct anim_data
 	uint32_t offset_frame;
 	uint32_t num_frames;
 };
-
-
-
 
 namespace gc
 {
@@ -29,23 +26,23 @@ namespace gc
 	const sf::IntRect TEX_RECT(0, 0, 512, 512);
 	const char TEX_PATH[] = "../Data/street.png";
 	// count of all blues
-	const uint32_t NUM_BLUE_SCALAR = 1 << 7;
+	const uint32_t NUM_BLUE_SCALAR = 1 << 7; // 7
 	// count of all purples
-	const uint32_t NUM_PURPLE_SCALAR = 1 << 8;
+	const uint32_t NUM_PURPLE_SCALAR = 1 << 8; // 8
 	// count of all fighters
 	const uint32_t NUM_FIGHTERS_SCALAR = NUM_BLUE_SCALAR + NUM_PURPLE_SCALAR;
 	const uint32_t NUM_FIGHTER_FRAMES = 4;
 	const uint32_t WINDOW_WIDTH = 800U;
 	const uint32_t WINDOW_HEIGHT = 600U;
-	const sf::Color WINDOW_FILL = { 0,100,0,255 };
+	const sf::Color WINDOW_FILL = { 94,94,94,255 };
 	const uint32_t FIGHTER_W = 32u;
 	const uint32_t FIGHTER_H = 32u;
-	const uint32_t ANIM_X_OFFSET = 128;
-	const uint32_t ANIM_Y_OFFSET = 0;
+	const uint32_t ANIM_X_OFFSET = 0U;
+	const uint32_t ANIM_Y_OFFSET = 0U;
 	// fighter sprite dimentions
 	const sf::IntRect SPR_RECT_BG = { 0U,256U,WINDOW_WIDTH,256U };
 	const sf::IntRect SPR_RECT_FIGHTER = {128U,0U,32U,32U };
-	const sf::FloatRect BOUNDARY_RECT = { 20.0f,150.0f,(float)WINDOW_WIDTH - 40.0f ,(float)WINDOW_HEIGHT - 100.0f };
+	const sf::FloatRect BOUNDARY_RECT = { 0.0f,150.0f,(float)WINDOW_WIDTH - FIGHTER_W ,(float)WINDOW_HEIGHT - FIGHTER_H };
 	const uint32_t BLUE_TEAM = 0;
 	const uint32_t PURPLE_TEAM = 1;
 	const uint32_t MEMBER_COUNT = 4;
@@ -57,9 +54,9 @@ namespace gc
 #ifdef SIMD
 	const char APP_NAME[] = "SIMD Streets";
 	// count of simd grouped blues
-	const uint32_t NUM_BLUE_SIMD = NUM_BLUE_SCALAR >> 2;
+	const uint32_t NUM_BLUE_SIMD = NUM_BLUE_SCALAR >> 2; // groups of 4
 	// count of simd grouped purples
-	const uint32_t NUM_PURPLE_SIMD = NUM_PURPLE_SCALAR >> 2;
+	const uint32_t NUM_PURPLE_SIMD = NUM_PURPLE_SCALAR >> 2; // groups of 4
 	// count of all simd grouped fighers
 	const uint32_t NUM_FIGHTERS_SIMD = NUM_BLUE_SIMD + NUM_PURPLE_SIMD;
 	const uint32_t SHUF_MAX = 16;
@@ -72,21 +69,20 @@ namespace gc
 	const __m128i ONE_EPI = _mm_set1_epi32(1);
 	const __m128i NEG_ONE_EPI = _mm_set1_epi32(-1);
 
-	const __m128i DEAD_NUM_FRAME_EPI = _mm_set1_epi32(ANIM_DATA[anim_data::DOWN].num_frames);
-	const __m128i DEAD_FAME_OFFSET_EPI = _mm_set1_epi32(ANIM_DATA[anim_data::DOWN].offset_frame);
+	const __m128i DEAD_NUM_FRAME_EPI = _mm_set1_epi32(anim_data::DOWN);
+	const __m128i DEAD_FAME_OFFSET_EPI = _mm_set1_epi32(0);
 
 	enum {
-		MIN_X = 0, MAX_X, MIN_Y, MAX_Y, BOUNDS_COUNT
-
+		MIN_X = 0, MIN_Y, MAX_X, MAX_Y, BOUNDS_COUNT
 	};
 
 
 	const __m128 m128_BOUNDS[BOUNDS_COUNT]
 	{
 		_mm_set1_ps((float)BOUNDARY_RECT.left),
-		_mm_set1_ps((float)(BOUNDARY_RECT.left + BOUNDARY_RECT.width)),
-		_mm_set1_ps((float)(BOUNDARY_RECT.top - BOUNDARY_RECT.height)),
-		_mm_set1_ps((float)BOUNDARY_RECT.top)
+		_mm_set1_ps((float)( BOUNDARY_RECT.top)),
+		_mm_set1_ps((float)( BOUNDARY_RECT.width)),
+		_mm_set1_ps((float)BOUNDARY_RECT.height)
 	};
 
 	// lookup table for left packing
@@ -131,7 +127,7 @@ namespace gc
 	  1,    //4,
 	};
 
-	const uint32_t PACK_LIMIT = NUM_FIGHTERS_SIMD - 4;
+	const uint32_t PACK_LIMIT = NUM_FIGHTERS_SCALAR - 4;
 
 #else
 	const char APP_NAME[] = "Scalar Streets";

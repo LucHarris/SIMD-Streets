@@ -31,6 +31,7 @@ public:
 	void UpdateAxisInBounds(__m128* axis_pos, __m128* axis_vel, const __m128& min, const __m128& max, const __m128& elapsed_secs);
 	void SetToTeamStartIndex(uint32_t index, uint32_t offset = 0);
 	__m128 DistanceSquaredSIMD(const __m128& a_x, const __m128& a_y, const __m128& b_x, const __m128& b_y);
+	void SetM128(uint32_t team, uint32_t simdOffset = 0);
 #else // scalar
 	void UpdateCollisionsScalar();
 	void UpdateSortScalar(float elapsed_secs);
