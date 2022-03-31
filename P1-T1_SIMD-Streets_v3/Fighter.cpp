@@ -1,5 +1,7 @@
 #include "Fighter.h"
 #include "Constants.h"
+
+#ifdef SIMD
 FighterIndices::FighterIndices()
 	:
 	start{0,gc::NUM_BLUE_SCALAR}
@@ -73,3 +75,8 @@ uint32_t FighterIndices::validate() volatile
 
 	return result;
 }
+#else
+
+
+
+#endif

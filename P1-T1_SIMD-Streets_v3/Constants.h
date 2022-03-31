@@ -2,7 +2,7 @@
 #include <SFML/Graphics.hpp>
 #include <tmmintrin.h>
 #ifndef SIMD
-#define SIMD
+//#define SIMD
 #endif // !SIMD
 
 struct anim_data
@@ -10,7 +10,6 @@ struct anim_data
 	enum { IDLE = 0, WALK, ATTACK, FALL, DOWN };
 	uint32_t offset_frame;
 	uint32_t num_frames;
-
 };
 
 
@@ -30,9 +29,9 @@ namespace gc
 	const sf::IntRect TEX_RECT(0, 0, 512, 512);
 	const char TEX_PATH[] = "../Data/street.png";
 	// count of all blues
-	const uint32_t NUM_BLUE_SCALAR = 1 << 5;
+	const uint32_t NUM_BLUE_SCALAR = 1 << 7;
 	// count of all purples
-	const uint32_t NUM_PURPLE_SCALAR = 1 << 5;
+	const uint32_t NUM_PURPLE_SCALAR = 1 << 8;
 	// count of all fighters
 	const uint32_t NUM_FIGHTERS_SCALAR = NUM_BLUE_SCALAR + NUM_PURPLE_SCALAR;
 	const uint32_t NUM_FIGHTER_FRAMES = 4;
@@ -51,7 +50,7 @@ namespace gc
 	const uint32_t PURPLE_TEAM = 1;
 	const uint32_t MEMBER_COUNT = 4;
 	// slight variation due to velocity not being normalised
-	const float FIGHTER_SPEED = 10.0f;
+	const float FIGHTER_SPEED = 300.0f;
 	const float SQUARE_DISTANCE_BETWEEN_FIGHTERS = 100.0f;
 	
 
