@@ -51,7 +51,7 @@ namespace gc
 	const uint32_t PURPLE_TEAM = 1;
 	const uint32_t MEMBER_COUNT = 4;
 	// slight variation due to velocity not being normalised
-	const float FIGHTER_SPEED = 1.0f;
+	const float FIGHTER_SPEED = 10.0f;
 	const float SQUARE_DISTANCE_BETWEEN_FIGHTERS = 100.0f;
 	
 

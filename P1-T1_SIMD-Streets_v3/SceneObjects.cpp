@@ -3,7 +3,7 @@
 #include "Constants.h"
 #include "Util.h"
 #include <smmintrin.h>
-
+#include <iostream>
 void SceneObjects::Init()
 {
     // init fighter data
@@ -109,7 +109,23 @@ void SceneObjects::Update(float dt)
     {
         for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
         {
-            
+            fighterSprites[i].setPosition(fighterSOA.posX[i], fighterSOA.posY[i]);
+            fighterSprites[i].setTextureRect(
+                {
+                    (int)(gc::ANIM_X_OFFSET + fighterSOA.frameOffset[i] * gc::FIGHTER_W),
+                    (int)(gc::ANIM_Y_OFFSET + ((fighterSOA.team[i] * 4U) + fighterSOA.member[i]) * gc::FIGHTER_H),
+                    (int)(gc::FIGHTER_W),
+                    (int)(gc::FIGHTER_H)
+                });
+
+            std::cout << fighterSOA.posX[i] << fighterSOA.posY[i] << fighterSOA.frameOffset[i] <<
+                fighterSOA.team[i] << fighterSOA.member[i] << fighterSOA.frameOffset[i] << fighterSOA.frameNum[i]
+                << fighterSOA.velX[i] << fighterSOA.velY[i];
+
+            std::cout << fighterIndices.p_frame_num << fighterIndices.p_frame_offset << fighterIndices.p_is_alive << fighterIndices.p_m128i_frame_num
+                << fighterIndices.p_m128i_frame_offset << fighterIndices.p_m128i_is_alive << fighterIndices.p_m128i_member <<
+                fighterIndices.p_m128i_team_id << fighterIndices.p_m128_pos_x << fighterIndices.p_m128_pos_y << fighterIndices.p_m128_vel_x <<
+                fighterIndices.p_member << fighterIndices.start[0] << fighterIndices.start[1];
         }
     }
 
@@ -144,7 +160,7 @@ void SceneObjects::UpdateCollisionSIMD()
     if (result) assert(false);
     
     // end condition == gc::NUM_BLUE_SCALAR
-
+    
     uint32_t blueStart = fighterIndices.start[FighterIndices::BLUE];
     uint32_t blueEnd = fighterIndices.start[FighterIndices::PURPLE];
     for (uint32_t b = blueStart; b < blueEnd; ++b)
@@ -175,15 +191,20 @@ void SceneObjects::UpdateCollisionSIMD()
         for (uint32_t p = gc::NUM_BLUE_SIMD; p < gc::NUM_FIGHTERS_SIMD; p++)
         {
 
-            const __m128 x = *fighterIndices.p_m128_pos_x;
-            const __m128 y = *fighterIndices.p_m128_pos_y;
+            __m128 x = *fighterIndices.p_m128_pos_x;
+            __m128 y = *fighterIndices.p_m128_pos_y;
             // calc squ distance between b and p
-            __m128 square_dist = DistanceSquaredSIMD(
+            /*__m128 square_dist = DistanceSquaredSIMD(
                 blue_pos_x,
                 blue_pos_y,
                 x,
-                y);
+                y);*/
 
+            x = _mm_sub_ps(blue_pos_x, x);
+            y = _mm_sub_ps(blue_pos_y, y);
+            x = _mm_mul_ps(x, x);
+            y = _mm_mul_ps(y, y);
+            __m128 square_dist = _mm_add_ps(x, y);
             // purple ko'ed if within range of blue
             {
                 // if distance is within range
