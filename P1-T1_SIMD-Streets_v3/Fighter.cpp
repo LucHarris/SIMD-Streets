@@ -2,9 +2,11 @@
 #include "Constants.h"
 
 #ifdef SIMD
+
+
 FighterIndices::FighterIndices()
 	:
-	start{0,gc::NUM_BLUE_SCALAR}
+	start{ 0,gc::NUM_BLUE_SCALAR }
 {
 }
 
@@ -35,7 +37,7 @@ void FighterIndices::int_single() volatile
 }
 
 void FighterIndices::step_single_and_set(uint32_t num_steps) volatile
-{ 
+{
 	p_pos_x = p_pos_x + num_steps;
 	p_pos_y = p_pos_y + num_steps;
 	p_vel_x = p_vel_x + num_steps;
@@ -75,6 +77,7 @@ uint32_t FighterIndices::validate() volatile
 
 	return result;
 }
+
 #else
 
 

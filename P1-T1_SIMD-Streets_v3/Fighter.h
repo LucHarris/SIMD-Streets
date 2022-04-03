@@ -15,9 +15,11 @@ struct FighterSOA
     _declspec(align(16)) uint32_t frameNum[gc::NUM_FIGHTERS_SCALAR];
     _declspec(align(16)) uint32_t alive[gc::NUM_FIGHTERS_SCALAR];
 };
+
+
 struct FighterIndices
 {
-	enum{BLUE,PURPLE,COUNT};
+	enum { BLUE, PURPLE, COUNT };
 	// initial loop requires indervidual incrementing for sorting
 	// where to start in soa
 	uint32_t start[COUNT];
@@ -34,16 +36,15 @@ struct FighterIndices
 
 	// initial loop convert above into __m128(i) 
 
-	_declspec(align(16))__m128* p_m128_pos_x = nullptr;
-	_declspec(align(16))__m128* p_m128_pos_y = nullptr;
-	_declspec(align(16))__m128* p_m128_vel_x = nullptr;
-	_declspec(align(16))__m128* p_m128_vel_y = nullptr;
-	_declspec(align(16))__m128i* p_m128i_team_id = nullptr;
-	_declspec(align(16))__m128i* p_m128i_member = nullptr;
-	_declspec(align(16))__m128i* p_m128i_frame_offset = nullptr;
-	// todo test and remove if not required
-	_declspec(align(16))__m128i* p_m128i_frame_num = nullptr;
-	_declspec(align(16))__m128i* p_m128i_is_alive = nullptr;
+	__m128* p_m128_pos_x = nullptr;
+	__m128* p_m128_pos_y = nullptr;
+	__m128* p_m128_vel_x = nullptr;
+	__m128* p_m128_vel_y = nullptr;
+	__m128i* p_m128i_team_id = nullptr;
+	__m128i* p_m128i_member = nullptr;
+	__m128i* p_m128i_frame_offset = nullptr;
+	__m128i* p_m128i_frame_num = nullptr;
+	__m128i* p_m128i_is_alive = nullptr;
 
 	FighterIndices();
 
@@ -55,6 +56,7 @@ struct FighterIndices
 	void set_m128() volatile;
 	uint32_t validate() volatile;
 };
+
 #else //SIMD
 struct FighterScalar
 {

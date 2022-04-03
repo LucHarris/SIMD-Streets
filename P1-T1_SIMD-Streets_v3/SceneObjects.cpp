@@ -4,8 +4,28 @@
 #include "Util.h"
 #include <smmintrin.h>
 #include <iostream>
+#ifdef  DEBUG_FILE_OUT
+#include <chrono>
+#endif
+
 void SceneObjects::Init()
 {
+    
+#ifdef DEBUG_FILE_OUT
+    for (size_t i = 0; i < gc::debug::COUNT; i++)
+    {
+        fileout[i].open(std::to_string(debugID) + std::string(gc::DEBUG_FILENAME[i]),std::ios::app);
+
+        if (!fileout[i].is_open())
+        {
+            assert(false);
+        }
+    }
+
+#endif // DEBUG_FILE_OUT
+
+
+
     // init fighter data
     {
 #ifdef SIMD
@@ -24,6 +44,7 @@ void SceneObjects::Init()
         }
 
         SetToTeamStartIndex(FighterIndices::BLUE);
+
 
 #else // scalar
         for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
@@ -91,14 +112,23 @@ void SceneObjects::Init()
 void SceneObjects::Update(float dt)
 {
 #ifdef SIMD
-    const __m128 m128_ELAPSED_SECS = _mm_set1_ps(dt);
+
+
+    _declspec(align(16)) const __m128 m128_ELAPSED_SECS = _mm_set1_ps(dt);
     // blue collide with purple
     UpdateCollisionSIMD();
     SetToTeamStartIndex(FighterIndices::BLUE);
+    
+
+#ifdef SIMD_LEFT_PACKING
     // sort
     UpdateLeftPackingMovementSIMD(m128_ELAPSED_SECS, gc::m128_BOUNDS);
     SetToTeamStartIndex(FighterIndices::BLUE);
     const size_t ENDLOOP = last_left_element >> 2;
+#else // !SIMD_LEFT_PACKING
+    const size_t ENDLOOP = gc::NUM_FIGHTERS_SIMD;
+#endif // SIMD_LEFT_PACKING
+
     for (size_t i = 0; i < ENDLOOP; i++)
     {
         UpdateAxisInBounds(fighterIndices.p_m128_pos_x, fighterIndices.p_m128_vel_x, gc::m128_BOUNDS[gc::MIN_X], gc::m128_BOUNDS[gc::MAX_X], m128_ELAPSED_SECS);
@@ -159,8 +189,18 @@ void SceneObjects::Draw(sf::RenderWindow& window)
     }
 }
 
+void SceneObjects::Release()
+{
+    for (size_t i = 0; i < gc::debug::COUNT; i++)
+    {
+        fileout[i].close();
+    }
+}
+
 
 #ifdef SIMD
+
+
 
 void SceneObjects::UpdateCollisionSIMD()
 {
@@ -179,15 +219,15 @@ void SceneObjects::UpdateCollisionSIMD()
     for (uint32_t b = blueStart; b < blueEnd; ++b)
     {
         // duplicate blue across 4 lanes so as every blue must be compared with purple simd
-        __m128 blue_pos_x = _mm_set1_ps(*fighterIndices.p_pos_x);
-        __m128 blue_pos_y = _mm_set1_ps(*fighterIndices.p_pos_y);
-        __m128 blue_vel_x = _mm_set1_ps(*fighterIndices.p_vel_x);
-        __m128 blue_vel_y = _mm_set1_ps(*fighterIndices.p_vel_y);
-        __m128i blue_team_id = _mm_set1_epi32(*fighterIndices.p_team_id);
-        __m128i blue_member = _mm_set1_epi32(*fighterIndices.p_member);
-        __m128i blue_frame_offset = _mm_set1_epi32(*fighterIndices.p_frame_offset);
-        __m128i blue_frame_num = _mm_set1_epi32(*fighterIndices.p_frame_num);
-        __m128i blue_is_alive = _mm_set1_epi32(*fighterIndices.p_is_alive);
+        _declspec(align(16)) __m128 blue_pos_x = _mm_set1_ps(*fighterIndices.p_pos_x);
+        _declspec(align(16)) __m128 blue_pos_y = _mm_set1_ps(*fighterIndices.p_pos_y);
+        _declspec(align(16)) __m128 blue_vel_x = _mm_set1_ps(*fighterIndices.p_vel_x);
+        _declspec(align(16)) __m128 blue_vel_y = _mm_set1_ps(*fighterIndices.p_vel_y);
+        _declspec(align(16)) __m128i blue_team_id = _mm_set1_epi32(*fighterIndices.p_team_id);
+        _declspec(align(16)) __m128i blue_member = _mm_set1_epi32(*fighterIndices.p_member);
+        _declspec(align(16)) __m128i blue_frame_offset = _mm_set1_epi32(*fighterIndices.p_frame_offset);
+        _declspec(align(16)) __m128i blue_frame_num = _mm_set1_epi32(*fighterIndices.p_frame_num);
+        _declspec(align(16)) __m128i blue_is_alive = _mm_set1_epi32(*fighterIndices.p_is_alive);
 
 
         // reset purple indices 
@@ -204,10 +244,10 @@ void SceneObjects::UpdateCollisionSIMD()
         for (uint32_t p = gc::NUM_BLUE_SIMD; p < gc::NUM_FIGHTERS_SIMD; p++)
         {
 
-            __m128 x = *fighterIndices.p_m128_pos_x;
-            __m128 y = *fighterIndices.p_m128_pos_y;
+            _declspec(align(16)) __m128 x = *fighterIndices.p_m128_pos_x;
+            _declspec(align(16)) __m128 y = *fighterIndices.p_m128_pos_y;
             // calc squ distance between b and p
-            __m128 square_dist = DistanceSquaredSIMD(
+            _declspec(align(16)) __m128 square_dist = DistanceSquaredSIMD(
                 blue_pos_x,
                 blue_pos_y,
                 x,
@@ -217,7 +257,7 @@ void SceneObjects::UpdateCollisionSIMD()
             {
                 // if distance is within range
                 // casting has zero latency
-                __m128i mask = _mm_castps_si128(_mm_cmplt_ps(square_dist, gc::SQU_DISTANCE_BETWEEN_FIGHTERS_PS));
+                _declspec(align(16)) __m128i mask = _mm_castps_si128(_mm_cmplt_ps(square_dist, gc::SQU_DISTANCE_BETWEEN_FIGHTERS_PS));
 
                 *fighterIndices.p_m128i_is_alive = _mm_blendv_epi8(*fighterIndices.p_m128i_is_alive, gc::ZERO_EPI, mask);
                 *fighterIndices.p_m128i_frame_num = _mm_blendv_epi8(*fighterIndices.p_m128i_frame_num, gc::DEAD_NUM_FRAME_EPI, mask);
@@ -246,7 +286,7 @@ void SceneObjects::UpdateLeftPackingMovementSIMD(const __m128& m128_elapsed_secs
     uint32_t inc = 0;
 
     // result of alive comparision
-    __m128i mask;
+    _declspec(align(16)) __m128i mask;
     // point to start of data
     SetToTeamStartIndex(FighterIndices::BLUE);
 
@@ -255,7 +295,7 @@ void SceneObjects::UpdateLeftPackingMovementSIMD(const __m128& m128_elapsed_secs
         // stepped from end of previous loop
         fighterIndices.set_m128();
         // mask based on if fighter is alive
-        mask = _mm_cmpeq_epi32(*fighterIndices.p_m128i_is_alive, gc::ZERO_EPI);
+        mask = _mm_cmpeq_epi32(*fighterIndices.p_m128i_is_alive, _mm_set1_epi32(0));// gc::ZERO_EPI);
         // shuffle mask
         mask_lookup = _mm_movemask_ps(_mm_castsi128_ps(mask));
 
@@ -308,6 +348,15 @@ void SceneObjects::UpdateLeftPackingMovementSIMD(const __m128& m128_elapsed_secs
 
         // inc from start
         SetToTeamStartIndex(FighterIndices::BLUE, inc);
+
+        if (fileout.is_open())
+        {
+            fileout[gc::debug::POSITION] << debugID << "\t"
+                << inc << "\t"
+                << last_left_element << "\n"
+                ;
+        }
+
     }
 
 }
@@ -316,16 +365,16 @@ void SceneObjects::UpdateAxisInBounds(__m128* axis_pos, __m128* axis_vel, const 
 {
     assert(axis_pos && axis_vel);
     // calc position
-    const __m128 vel = _mm_mul_ps(*axis_vel, elapsed_secs);
-    __m128 next_pos = _mm_add_ps(*axis_pos, vel);
+    _declspec(align(16)) const __m128 vel = _mm_mul_ps(*axis_vel, elapsed_secs);
+    _declspec(align(16)) __m128 next_pos = _mm_add_ps(*axis_pos, vel);
 
     // compare position with boundary
-    const __m128 mask_min = _mm_cmplt_ps(next_pos, min);
-    const __m128 mask_max = _mm_cmpgt_ps(next_pos, max); // next_pos no longer needed
-    const __m128 mask = _mm_or_ps(mask_max, mask_min);
+    _declspec(align(16)) const __m128 mask_min = _mm_cmplt_ps(next_pos, min);
+    _declspec(align(16)) const __m128 mask_max = _mm_cmpgt_ps(next_pos, max); // next_pos no longer needed
+    _declspec(align(16)) const __m128 mask = _mm_or_ps(mask_max, mask_min);
 
     // generate multiplier for flipping velocity where next position outside of boundary
-    const __m128 multiplier = _mm_blendv_ps(gc::ONE_PS, gc::NEG_ONE_PS, mask);
+    _declspec(align(16)) const __m128 multiplier = _mm_blendv_ps(gc::ONE_PS, gc::NEG_ONE_PS, mask);
 
     // limit position
     next_pos = _mm_min_ps(next_pos, max);
@@ -360,8 +409,8 @@ void SceneObjects::SetToTeamStartIndex(uint32_t team, uint32_t offset)
 __m128 SceneObjects::DistanceSquaredSIMD(const __m128& a_x, const __m128& a_y,   const  __m128& b_x, const __m128& b_y)
 {
     // a - b
-    __m128 x = _mm_sub_ps(a_x, b_x);
-    __m128 y = _mm_sub_ps(a_y, b_y);
+    _declspec(align(16)) __m128 x = _mm_sub_ps(a_x, b_x);
+    _declspec(align(16)) __m128 y = _mm_sub_ps(a_y, b_y);
 
     // x^2, y^2
     x = _mm_mul_ps(x, x);
@@ -385,7 +434,9 @@ void SceneObjects::SetM128(uint32_t team, uint32_t simdOffset)
     fighterIndices.p_m128i_frame_num = (__m128i*)(fighterSOA.frameNum + i);
     fighterIndices.p_m128i_is_alive = (__m128i*)(fighterSOA.alive + i);
 }
-#else
+
+
+#else // scalar
 
 
 
@@ -475,6 +526,4 @@ float SceneObjects::DistanceSquaredScalar(float a_x, float a_y, float b_x, float
     return x + y;
 }
 
-
-
-#endif
+#endif // simd

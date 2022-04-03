@@ -1,9 +1,17 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include <tmmintrin.h>
-#ifndef SIMD
-#define SIMD
-#endif // !SIMD
+#include <fstream>
+
+// Enable/Disable SIMD
+
+//#define SIMD
+#ifdef SIMD
+//#define SIMD_LEFT_PACKING
+#endif // !1
+
+
+#define DEBUG_FILE_OUT
 
 struct anim_data
 {
@@ -26,9 +34,9 @@ namespace gc
 	const sf::IntRect TEX_RECT(0, 0, 512, 512);
 	const char TEX_PATH[] = "../Data/street.png";
 	// count of all blues
-	const uint32_t NUM_BLUE_SCALAR = 1 << 7; // 7
+	const uint32_t NUM_BLUE_SCALAR = 1 << 4; // 7
 	// count of all purples
-	const uint32_t NUM_PURPLE_SCALAR = 1 << 8; // 8
+	const uint32_t NUM_PURPLE_SCALAR = 1 << 10; // 8
 	// count of all fighters
 	const uint32_t NUM_FIGHTERS_SCALAR = NUM_BLUE_SCALAR + NUM_PURPLE_SCALAR;
 	const uint32_t NUM_FIGHTER_FRAMES = 4;
@@ -48,8 +56,21 @@ namespace gc
 	const uint32_t MEMBER_COUNT = 4;
 	// slight variation due to velocity not being normalised
 	const float FIGHTER_SPEED = 300.0f;
-	const float SQUARE_DISTANCE_BETWEEN_FIGHTERS = 100.0f;
-	
+	const float SQUARE_DISTANCE_BETWEEN_FIGHTERS = 200.0f;
+#ifdef DEBUG_FILE_OUT
+	enum debug
+	{
+		POSITION = 0,
+		COUNT,
+		CHAR_LEN = 64
+	};
+
+	const char DEBUG_FILENAME[COUNT][CHAR_LEN]
+	{
+		"debug_position.txt",
+	};
+#endif
+
 
 #ifdef SIMD
 	const char APP_NAME[] = "SIMD Streets";
@@ -60,24 +81,24 @@ namespace gc
 	// count of all simd grouped fighers
 	const uint32_t NUM_FIGHTERS_SIMD = NUM_BLUE_SIMD + NUM_PURPLE_SIMD;
 	const uint32_t SHUF_MAX = 16;
-	const __m128 ONE_PS = _mm_set1_ps(1);
-	const __m128 NEG_ONE_PS = _mm_set1_ps(-1);
-	const __m128 ZERO_PS = _mm_set1_ps(0);
-	const __m128 SQU_DISTANCE_BETWEEN_FIGHTERS_PS = _mm_set1_ps(SQUARE_DISTANCE_BETWEEN_FIGHTERS);
+	_declspec(align(16)) const __m128 ONE_PS = _mm_set1_ps(1);
+	_declspec(align(16)) const __m128 NEG_ONE_PS = _mm_set1_ps(-1);
+	_declspec(align(16)) const __m128 ZERO_PS = _mm_set1_ps(0);
+	_declspec(align(16)) const __m128 SQU_DISTANCE_BETWEEN_FIGHTERS_PS = _mm_set1_ps(SQUARE_DISTANCE_BETWEEN_FIGHTERS);
 
-	const __m128i ZERO_EPI = _mm_set1_epi32(0);
-	const __m128i ONE_EPI = _mm_set1_epi32(1);
-	const __m128i NEG_ONE_EPI = _mm_set1_epi32(-1);
+	_declspec(align(16)) const __m128i ZERO_EPI = _mm_set1_epi32(0);
+	_declspec(align(16)) const __m128i ONE_EPI = _mm_set1_epi32(1);
+	_declspec(align(16)) const __m128i NEG_ONE_EPI = _mm_set1_epi32(-1);
 
-	const __m128i DEAD_NUM_FRAME_EPI = _mm_set1_epi32(anim_data::DOWN);
-	const __m128i DEAD_FAME_OFFSET_EPI = _mm_set1_epi32(0);
+	_declspec(align(16)) const __m128i DEAD_NUM_FRAME_EPI = _mm_set1_epi32(anim_data::DOWN);
+	_declspec(align(16)) const __m128i DEAD_FAME_OFFSET_EPI = _mm_set1_epi32(0);
 
 	enum {
 		MIN_X = 0, MIN_Y, MAX_X, MAX_Y, BOUNDS_COUNT
 	};
 
 
-	const __m128 m128_BOUNDS[BOUNDS_COUNT]
+	_declspec(align(16)) const __m128 m128_BOUNDS[BOUNDS_COUNT]
 	{
 		_mm_set1_ps((float)BOUNDARY_RECT.left),
 		_mm_set1_ps((float)( BOUNDARY_RECT.top)),
@@ -86,7 +107,7 @@ namespace gc
 	};
 
 	// lookup table for left packing
-	const __m128i SHUF_TBL[SHUF_MAX]
+	_declspec(align(16)) const __m128i SHUF_TBL[SHUF_MAX]
 	{
 	  _mm_set_epi8(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0),//mask0  0000 to 0000 4
 	  _mm_set_epi8(3,2,1,0,15,14,13,12,11,10,9,8,7,6,5,4),//mask1  0001 to 0001 3

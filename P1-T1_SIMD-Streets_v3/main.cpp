@@ -39,5 +39,7 @@ int main()
         window.display();
     }
 
+    sceneObjects.Release();
+
     return 0;
 }
