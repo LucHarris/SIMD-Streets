@@ -12,8 +12,6 @@ int main()
     sf::Time elapsed;
     SceneObjects sceneObjects;
 
-    
-
     // initialise
     {
         sceneObjects.Init();

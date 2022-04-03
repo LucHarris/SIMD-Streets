@@ -4,6 +4,7 @@
 #include "Util.h"
 #include <smmintrin.h>
 #include <iostream>
+#include <string>
 #ifdef  DEBUG_FILE_OUT
 #include <chrono>
 #endif
@@ -111,14 +112,30 @@ void SceneObjects::Init()
 
 void SceneObjects::Update(float dt)
 {
-#ifdef SIMD
+    uint32_t updateTimer = 0;
+    std::string testType;
 
+
+    uint32_t aliveCount = 0;
+
+
+
+#ifdef SIMD
+    // reset timer
+    {
+#ifdef SIMD_LEFT_PACKING
+        testType = "SIMD_LP";
+#else
+        testType = "SIMD";
+#endif
+        loopTimer.reset();
+    }
 
     _declspec(align(16)) const __m128 m128_ELAPSED_SECS = _mm_set1_ps(dt);
     // blue collide with purple
     UpdateCollisionSIMD();
     SetToTeamStartIndex(FighterIndices::BLUE);
-    
+
 
 #ifdef SIMD_LEFT_PACKING
     // sort
@@ -135,6 +152,13 @@ void SceneObjects::Update(float dt)
         UpdateAxisInBounds(fighterIndices.p_m128_pos_y, fighterIndices.p_m128_vel_y, gc::m128_BOUNDS[gc::MIN_Y], gc::m128_BOUNDS[gc::MAX_Y], m128_ELAPSED_SECS);
         fighterIndices.inc_m128();
     }
+
+    // get time
+    updateTimer = loopTimer.get_elapsed_time().count();
+
+
+
+
     // update sprites
     {
         for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
@@ -150,16 +174,30 @@ void SceneObjects::Update(float dt)
                     (int)(gc::FIGHTER_H)
                 });
 
+            if (fighterSOA.alive[i])
+            {
+                ++aliveCount;
+            }
 
         }
     }
 
 
 #else // SCALAR
-    
+
+    // reset timer
+    {
+        testType = "SCALAR";
+        loopTimer.reset();
+    }
+
     UpdateCollisionsScalar();
     UpdateSortScalar(dt);
     UpdateAxisInBoundsScalar(dt);
+
+    // get time
+    updateTimer = loopTimer.get_elapsed_time().count();
+
     // update sprite data
     for (uint32_t i = 0; i < gc::NUM_FIGHTERS_SCALAR; i++)
     {
@@ -173,9 +211,16 @@ void SceneObjects::Update(float dt)
                 (int)(gc::FIGHTER_W),
                 (int)(gc::FIGHTER_H)
             });
+
+        if (fighterAOS.data[i].alive)
+        {
+            ++aliveCount;
+        }
     }
 
 #endif // SIMD
+
+    records.ToFile(testType.c_str(), updateTimer, gc::NUM_FIGHTERS_SCALAR, gc::NUM_BLUE_SCALAR, gc::NUM_PURPLE_SCALAR, aliveCount);
 
 }
 
@@ -191,10 +236,12 @@ void SceneObjects::Draw(sf::RenderWindow& window)
 
 void SceneObjects::Release()
 {
+#ifdef DEBUG_FILE_OUT 
     for (size_t i = 0; i < gc::debug::COUNT; i++)
     {
         fileout[i].close();
     }
+#endif
 }
 
 
@@ -349,14 +396,15 @@ void SceneObjects::UpdateLeftPackingMovementSIMD(const __m128& m128_elapsed_secs
         // inc from start
         SetToTeamStartIndex(FighterIndices::BLUE, inc);
 
-        if (fileout.is_open())
+#ifdef DEBUG_FILE_OUT
+        if (fileout[gc::debug::POSITION].is_open())
         {
             fileout[gc::debug::POSITION] << debugID << "\t"
                 << inc << "\t"
                 << last_left_element << "\n"
                 ;
         }
-
+#endif DEBUG_FILE_OUT
     }
 
 }

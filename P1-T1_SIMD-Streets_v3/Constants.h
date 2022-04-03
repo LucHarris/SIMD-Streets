@@ -10,8 +10,12 @@
 //#define SIMD_LEFT_PACKING
 #endif // !1
 
+// set number of left shifts for blue fighters
+#define BLUE_LEFT_SHIFT 10
+// set number of left shifts for purple fighters
+#define PUPLE_LEFT_SHIFT 10
 
-#define DEBUG_FILE_OUT
+//#define DEBUG_FILE_OUT
 
 struct anim_data
 {
@@ -34,9 +38,9 @@ namespace gc
 	const sf::IntRect TEX_RECT(0, 0, 512, 512);
 	const char TEX_PATH[] = "../Data/street.png";
 	// count of all blues
-	const uint32_t NUM_BLUE_SCALAR = 1 << 4; // 7
+	const uint32_t NUM_BLUE_SCALAR = 1 << BLUE_LEFT_SHIFT; // 7
 	// count of all purples
-	const uint32_t NUM_PURPLE_SCALAR = 1 << 10; // 8
+	const uint32_t NUM_PURPLE_SCALAR = 1 << PUPLE_LEFT_SHIFT; // 8
 	// count of all fighters
 	const uint32_t NUM_FIGHTERS_SCALAR = NUM_BLUE_SCALAR + NUM_PURPLE_SCALAR;
 	const uint32_t NUM_FIGHTER_FRAMES = 4;

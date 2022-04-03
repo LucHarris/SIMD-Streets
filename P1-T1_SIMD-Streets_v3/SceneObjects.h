@@ -2,7 +2,8 @@
 
 #include "Fighter.h"
 #include <SFML/Graphics.hpp>
-
+#include "loop_timer.h"
+#include "Records.h"
 
 class SceneObjects
 {
@@ -20,8 +21,8 @@ class SceneObjects
 	sf::Texture texture;
 	sf::Sprite fighterSprites[gc::NUM_FIGHTERS_SCALAR];
 	sf::Sprite bgSprite;
-
-
+	loop_timer<duration_misecs_ui> loopTimer;
+	Records records;
 #ifdef DEBUG_FILE_OUT
 	std::ofstream fileout[gc::debug::COUNT];
 	time_t debugID = time(0);
