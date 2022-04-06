@@ -1,7 +1,7 @@
 #pragma once
 #include <emmintrin.h> // SIMD intrinsics
-
 #include "Constants.h"
+
 #ifdef SIMD
 struct FighterSOA
 {
@@ -35,7 +35,6 @@ struct FighterIndices
 	uint32_t* p_is_alive = nullptr;
 
 	// initial loop convert above into __m128(i) 
-
 	__m128* p_m128_pos_x = nullptr;
 	__m128* p_m128_pos_y = nullptr;
 	__m128* p_m128_vel_x = nullptr;

@@ -1,5 +1,5 @@
 #pragma once
-
+#include "Constants.h"
 #include "Fighter.h"
 #include <SFML/Graphics.hpp>
 #include "loop_timer.h"
@@ -10,9 +10,6 @@ class SceneObjects
 #ifdef SIMD
 	FighterSOA fighterSOA;
 	volatile FighterIndices fighterIndices;
-
-
-
 	// left packing break condition
 	uint32_t last_left_element = 0;
 #else

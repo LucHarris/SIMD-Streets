@@ -4,10 +4,10 @@
 #include <fstream>
 
 // Enable/Disable SIMD
+#define SIMD
 
-//#define SIMD
 #ifdef SIMD
-//#define SIMD_LEFT_PACKING
+#define SIMD_LEFT_PACKING
 #endif // !1
 
 // set number of left shifts for blue fighters

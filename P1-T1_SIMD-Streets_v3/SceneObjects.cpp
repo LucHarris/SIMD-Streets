@@ -1,6 +1,5 @@
 #include "SceneObjects.h"
 #include <cassert>
-#include "Constants.h"
 #include "Util.h"
 #include <smmintrin.h>
 #include <iostream>
@@ -134,13 +133,16 @@ void SceneObjects::Update(float dt)
     _declspec(align(16)) const __m128 m128_ELAPSED_SECS = _mm_set1_ps(dt);
     // blue collide with purple
     UpdateCollisionSIMD();
+    // reset indices to start of SOA structure
     SetToTeamStartIndex(FighterIndices::BLUE);
-
 
 #ifdef SIMD_LEFT_PACKING
-    // sort
+    // sorting 'down' purple elements to the right
+    // updates last_left_element for break condition
     UpdateLeftPackingMovementSIMD(m128_ELAPSED_SECS, gc::m128_BOUNDS);
+    // reset indices to start of SOA structure
     SetToTeamStartIndex(FighterIndices::BLUE);
+    // 32bit to 128bit position
     const size_t ENDLOOP = last_left_element >> 2;
 #else // !SIMD_LEFT_PACKING
     const size_t ENDLOOP = gc::NUM_FIGHTERS_SIMD;
@@ -148,8 +150,11 @@ void SceneObjects::Update(float dt)
 
     for (size_t i = 0; i < ENDLOOP; i++)
     {
+        // update x position and velocity
         UpdateAxisInBounds(fighterIndices.p_m128_pos_x, fighterIndices.p_m128_vel_x, gc::m128_BOUNDS[gc::MIN_X], gc::m128_BOUNDS[gc::MAX_X], m128_ELAPSED_SECS);
+        // update y position and velocity
         UpdateAxisInBounds(fighterIndices.p_m128_pos_y, fighterIndices.p_m128_vel_y, gc::m128_BOUNDS[gc::MIN_Y], gc::m128_BOUNDS[gc::MAX_Y], m128_ELAPSED_SECS);
+        // increment 128 bits
         fighterIndices.inc_m128();
     }
 
@@ -265,6 +270,9 @@ void SceneObjects::UpdateCollisionSIMD()
     uint32_t blueEnd = fighterIndices.start[FighterIndices::PURPLE];
     for (uint32_t b = blueStart; b < blueEnd; ++b)
     {
+        {
+
+        }
         // duplicate blue across 4 lanes so as every blue must be compared with purple simd
         _declspec(align(16)) __m128 blue_pos_x = _mm_set1_ps(*fighterIndices.p_pos_x);
         _declspec(align(16)) __m128 blue_pos_y = _mm_set1_ps(*fighterIndices.p_pos_y);
@@ -275,7 +283,6 @@ void SceneObjects::UpdateCollisionSIMD()
         _declspec(align(16)) __m128i blue_frame_offset = _mm_set1_epi32(*fighterIndices.p_frame_offset);
         _declspec(align(16)) __m128i blue_frame_num = _mm_set1_epi32(*fighterIndices.p_frame_num);
         _declspec(align(16)) __m128i blue_is_alive = _mm_set1_epi32(*fighterIndices.p_is_alive);
-
 
         // reset purple indices 
         SetM128(FighterIndices::PURPLE);
@@ -395,16 +402,6 @@ void SceneObjects::UpdateLeftPackingMovementSIMD(const __m128& m128_elapsed_secs
 
         // inc from start
         SetToTeamStartIndex(FighterIndices::BLUE, inc);
-
-#ifdef DEBUG_FILE_OUT
-        if (fileout[gc::debug::POSITION].is_open())
-        {
-            fileout[gc::debug::POSITION] << debugID << "\t"
-                << inc << "\t"
-                << last_left_element << "\n"
-                ;
-        }
-#endif DEBUG_FILE_OUT
     }
 
 }
