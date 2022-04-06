@@ -153,13 +153,18 @@
   <ItemGroup>
     <ClCompile Include="Fighter.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Records.cpp" />
     <ClCompile Include="SceneObjects.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Fighter.h" />
+    <ClInclude Include="Records.h" />
     <ClInclude Include="SceneObjects.h" />
     <ClInclude Include="Util.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

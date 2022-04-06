@@ -12,8 +12,6 @@ int main()
     sf::Time elapsed;
     SceneObjects sceneObjects;
 
-    
-
     // initialise
     {
         sceneObjects.Init();
@@ -38,6 +36,8 @@ int main()
         sceneObjects.Draw(window);
         window.display();
     }
+
+    sceneObjects.Release();
 
     return 0;
 }
