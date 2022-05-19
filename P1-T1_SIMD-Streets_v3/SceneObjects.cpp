@@ -4,6 +4,7 @@
 #include <smmintrin.h>
 #include <iostream>
 #include <string>
+#include <iomanip>
 #ifdef  DEBUG_FILE_OUT
 #include <chrono>
 #endif
@@ -65,8 +66,16 @@ void SceneObjects::Init()
 #endif
     }
 
-    // init texture and sprites
+    // init texture, sprites, text
     {
+        if (!font.loadFromFile(gc::FONT_PATH))
+        {
+            assert(false);
+        }
+        text.setFont(font);
+        text.setScale(0.5f,0.5f);
+        text.setPosition(0.0f, 10.0f);
+
         if (!texture.loadFromFile(gc::TEX_PATH, gc::TEX_RECT))
         {
             assert(false);
@@ -225,6 +234,24 @@ void SceneObjects::Update(float dt)
 
 #endif // SIMD
 
+    // set info text
+    {
+        //reset stream
+        textOSS.str("");
+        textOSS.clear();
+
+        textOSS
+            << "FPS:                        " << std::setprecision(5)  <<  (1.0f/ dt )
+            << "\nBlue Fighters:            " << gc::NUM_BLUE_SCALAR
+            << "\nPurple Fighters:          " << gc::NUM_PURPLE_SCALAR
+#ifdef SIMD_LEFT_PACKING
+            << "\nLast Left Packed Element: " << last_left_element
+#endif //SIMD_LEFT_PACKING
+            ;
+        text.setString(textOSS.str());
+    }
+
+
     records.ToFile(testType.c_str(), updateTimer, gc::NUM_FIGHTERS_SCALAR, gc::NUM_BLUE_SCALAR, gc::NUM_PURPLE_SCALAR, aliveCount);
 
 }
@@ -237,6 +264,9 @@ void SceneObjects::Draw(sf::RenderWindow& window)
     {
         window.draw(fighterSprites[i]);
     }
+
+    window.draw(text);
+
 }
 
 void SceneObjects::Release()

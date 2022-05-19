@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include "loop_timer.h"
 #include "Records.h"
+#include <sstream>
 
 class SceneObjects
 {
@@ -18,6 +19,9 @@ class SceneObjects
 	sf::Texture texture;
 	sf::Sprite fighterSprites[gc::NUM_FIGHTERS_SCALAR];
 	sf::Sprite bgSprite;
+	sf::Font font;
+	sf::Text text;
+	std::ostringstream textOSS;
 	loop_timer<duration_misecs_ui> loopTimer;
 	Records records;
 #ifdef DEBUG_FILE_OUT

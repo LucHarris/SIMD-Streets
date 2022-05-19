@@ -11,9 +11,9 @@
 #endif // !1
 
 // set number of left shifts for blue fighters
-#define BLUE_LEFT_SHIFT 10
+#define BLUE_LEFT_SHIFT 4
 // set number of left shifts for purple fighters
-#define PUPLE_LEFT_SHIFT 10
+#define PUPLE_LEFT_SHIFT 4
 
 //#define DEBUG_FILE_OUT
 
@@ -37,6 +37,7 @@ namespace gc
 
 	const sf::IntRect TEX_RECT(0, 0, 512, 512);
 	const char TEX_PATH[] = "../Data/street.png";
+	const char FONT_PATH[] = "../Data/8-bit-pusab-Seba-Perez.ttf";
 	// count of all blues
 	const uint32_t NUM_BLUE_SCALAR = 1 << BLUE_LEFT_SHIFT; // 7
 	// count of all purples
@@ -44,8 +45,8 @@ namespace gc
 	// count of all fighters
 	const uint32_t NUM_FIGHTERS_SCALAR = NUM_BLUE_SCALAR + NUM_PURPLE_SCALAR;
 	const uint32_t NUM_FIGHTER_FRAMES = 4;
-	const uint32_t WINDOW_WIDTH = 800U;
-	const uint32_t WINDOW_HEIGHT = 600U;
+	const uint32_t WINDOW_WIDTH = 1600U;
+	const uint32_t WINDOW_HEIGHT = 900U;
 	const sf::Color WINDOW_FILL = { 94,94,94,255 };
 	const uint32_t FIGHTER_W = 32u;
 	const uint32_t FIGHTER_H = 32u;
