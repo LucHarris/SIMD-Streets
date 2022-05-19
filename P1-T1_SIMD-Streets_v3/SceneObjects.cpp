@@ -234,23 +234,7 @@ void SceneObjects::Update(float dt)
 
 #endif // SIMD
 
-    // set info text
-    {
-        //reset stream
-        textOSS.str("");
-        textOSS.clear();
-
-        textOSS
-            << "FPS:                        " << std::setprecision(5)  <<  (1.0f/ dt )
-            << "\nBlue Fighters:            " << gc::NUM_BLUE_SCALAR
-            << "\nPurple Fighters:          " << gc::NUM_PURPLE_SCALAR
-#ifdef SIMD_LEFT_PACKING
-            << "\nLast Left Packed Element: " << last_left_element
-#endif //SIMD_LEFT_PACKING
-            ;
-        text.setString(textOSS.str());
-    }
-
+    SetText(dt);
 
     records.ToFile(testType.c_str(), updateTimer, gc::NUM_FIGHTERS_SCALAR, gc::NUM_BLUE_SCALAR, gc::NUM_PURPLE_SCALAR, aliveCount);
 
@@ -323,9 +307,9 @@ void SceneObjects::UpdateCollisionSIMD()
 
         // blue interacts with 4 purple members in each iteration
         uint32_t purpleStart = gc::NUM_BLUE_SIMD;
-        uint32_t purpleEnd = gc::NUM_FIGHTERS_SIMD;
+        uint32_t purpleEnd = last_left_element >> 2;
 
-        for (uint32_t p = gc::NUM_BLUE_SIMD; p < gc::NUM_FIGHTERS_SIMD; p++)
+        for (uint32_t p = gc::NUM_BLUE_SIMD; p < purpleEnd; p++)
         {
 
             _declspec(align(16)) __m128 x = *fighterIndices.p_m128_pos_x;
@@ -602,3 +586,26 @@ float SceneObjects::DistanceSquaredScalar(float a_x, float a_y, float b_x, float
 }
 
 #endif // simd
+
+void SceneObjects::SetText(float dt)
+{
+
+    //reset stream
+    textOSS.str("");
+    textOSS.clear();
+    textOSS
+        << "FPS:                        " << (gc::DT_RATE / dt)
+        << "\nBlue Fighters:            " << gc::NUM_BLUE_SCALAR
+        << "\nPurple Fighters:          " << gc::NUM_PURPLE_SCALAR
+#ifdef SIMD_LEFT_PACKING
+        << "\nLast Left Packed Element: " << last_left_element
+#else 
+        << "\n'Alive' Elements:    " << std::count_if(fighterAOS.data, fighterAOS.data + gc::NUM_FIGHTERS_SCALAR, [](const FighterScalar& a)
+            {
+                return a.alive != 0;
+            })
+#endif //SIMD_LEFT_PACKING
+        ;
+    text.setString(textOSS.str());
+
+}

@@ -13,7 +13,7 @@
 // set number of left shifts for blue fighters
 #define BLUE_LEFT_SHIFT 4
 // set number of left shifts for purple fighters
-#define PUPLE_LEFT_SHIFT 4
+#define PUPLE_LEFT_SHIFT 11
 
 //#define DEBUG_FILE_OUT
 
@@ -52,6 +52,12 @@ namespace gc
 	const uint32_t FIGHTER_H = 32u;
 	const uint32_t ANIM_X_OFFSET = 0U;
 	const uint32_t ANIM_Y_OFFSET = 0U;
+	const float DT_RATE =
+#ifdef SIMD
+		1.0f;
+#else
+		0.7f;
+#endif
 	// fighter sprite dimentions
 	const sf::IntRect SPR_RECT_BG = { 0U,256U,WINDOW_WIDTH,256U };
 	const sf::IntRect SPR_RECT_FIGHTER = {128U,0U,32U,32U };

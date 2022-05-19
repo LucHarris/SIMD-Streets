@@ -12,7 +12,7 @@ class SceneObjects
 	FighterSOA fighterSOA;
 	volatile FighterIndices fighterIndices;
 	// left packing break condition
-	uint32_t last_left_element = 0;
+	uint32_t last_left_element = gc::NUM_FIGHTERS_SCALAR-1;
 #else
 	FighterAOS fighterAOS;
 #endif // SIMD
@@ -35,7 +35,7 @@ public:
 	void Update(float dt);
 	void Draw(sf::RenderWindow& window);
 	void Release();
-
+	void SetText(float dt);
 #ifdef SIMD
 
 	void UpdateCollisionSIMD();
@@ -50,8 +50,8 @@ public:
 	void UpdateSortScalar(float elapsed_secs);
 	void UpdateAxisInBoundsScalar(float elapsed_secs);
 	float DistanceSquaredScalar(float a_x,float a_y, float b_x,float b_y);
+	
 #endif // SIMD
-
 
 };
 
